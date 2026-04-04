@@ -18,7 +18,44 @@ DATA = {
     },
     # можете добавить свои рецепты ;)
 }
+from django.shortcuts import render
 
+
+def recipe_view(request, recipe_name):
+    """
+    Показывает ингредиенты рецепта.
+    Поддерживает параметр ?servings=N для умножения порций.
+    """
+    # Получаем количество порций (по умолчанию 1)
+    servings = request.GET.get('servings', 1)
+    
+    # Пробуем преобразовать в число
+    try:
+        servings = int(servings)
+        if servings < 1:
+            servings = 1
+    except (ValueError, TypeError):
+        servings = 1
+    
+    # Получаем рецепт из DATA
+    recipe = DATA.get(recipe_name)
+    
+    # Если рецепт не найден — возвращаем пустой контекст
+    if not recipe:
+        return render(request, 'calculator/index.html', {'recipe': None})
+    
+    # Умножаем ингредиенты на количество порций
+    recipe_context = {}
+    for ingredient, amount in recipe.items():
+        recipe_context[ingredient] = amount * servings
+    
+    # Формируем контекст
+    context = {
+        'recipe': recipe_context
+    }
+    
+    # Рендерим шаблон
+    return render(request, 'calculator/index.html', context)
 # Напишите ваш обработчик. Используйте DATA как источник данных
 # Результат - render(request, 'calculator/index.html', context)
 # В качестве контекста должен быть передан словарь с рецептом:
