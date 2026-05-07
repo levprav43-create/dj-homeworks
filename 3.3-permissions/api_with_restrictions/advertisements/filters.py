@@ -1,12 +1,16 @@
-from django_filters import rest_framework as filters
+import django_filters
+from .models import Advertisement, AdvertisementStatusChoices
 
-from advertisements.models import Advertisement
 
-
-class AdvertisementFilter(filters.FilterSet):
-    """Фильтры для объявлений."""
-
-    # TODO: задайте требуемые фильтры
-
+class AdvertisementFilter(django_filters.FilterSet):
+    """Фильтры для объявлений"""
+    
+    # Фильтрация по дате создания (диапазон)
+    created_at = django_filters.DateFromToRangeFilter()
+    
+    # Фильтрация по статусу
+    status = django_filters.ChoiceFilter(choices=AdvertisementStatusChoices.choices)
+    
     class Meta:
         model = Advertisement
+        fields = ['status', 'created_at']

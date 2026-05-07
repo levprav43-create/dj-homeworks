@@ -1,29 +1,48 @@
 # примеры API-запросов
 
-@baseUrl = https://localhost:8000/api
+@baseUrl = http://127.0.0.1:8000/api
 
-# получение объявлений
+### 1. Получение объявлений (без авторизации)
 GET {{baseUrl}}/advertisements/
 Content-Type: application/json
 
 ###
 
-# создание объявления
+### 2. Создание объявления (С ТОКЕНОМ ADMIN!)
 POST {{baseUrl}}/advertisements/
 Content-Type: application/json
-Authorization: Token 902ef055a9ac93f18327f1f9c45ab059f1a62c7d
+Authorization: Token 88dff2622d2917e1d539b8c16ee2e53acb930b80
 
 {
   "title": "Шкаф IKEA",
-  "description": "Срочно"
+  "description": "Срочно продам",
+  "status": "OPEN"
 }
 
 ###
 
-# попытка поменять объявление
+### 3. Получение списка всех объявлений
+GET {{baseUrl}}/advertisements/
+Content-Type: application/json
+
+###
+
+### 4. Фильтрация по статусу
+GET {{baseUrl}}/advertisements/?status=OPEN
+Content-Type: application/json
+
+###
+
+### 5. Фильтрация по дате (диапазон)
+GET {{baseUrl}}/advertisements/?created_at_after=2024-01-01&created_at_before=2024-12-31
+Content-Type: application/json
+
+###
+
+### 6. Обновление объявления (только автор может!)
 PATCH {{baseUrl}}/advertisements/1/
 Content-Type: application/json
-Authorization: Token 902ef055a9ac93f18327f1f9c45ab059f1a62c7d
+Authorization: Token 88dff2622d2917e1d539b8c16ee2e53acb930b80
 
 {
   "status": "CLOSED"
@@ -31,12 +50,75 @@ Authorization: Token 902ef055a9ac93f18327f1f9c45ab059f1a62c7d
 
 ###
 
-# фильтрация по создателю
-GET {{baseUrl}}/advertisements/?creator=3
+### 7. Удаление объявления (только автор!)
+DELETE {{baseUrl}}/advertisements/1/
+Authorization: Token 88dff2622d2917e1d539b8c16ee2e53acb930b80
+
+###
+
+### 8. ТЕСТ 1: Попытка удалить ЧУЖОЕ объявление (должно быть 403)
+# Используем токен от tester для удаления объявления admin (id=1)
+DELETE {{baseUrl}}/advertisements/1/
+Authorization: Token 694835fdb5f8c7a29f17e8cb79b83047b001c898
+
+###
+
+### 9. Создание объявления БЕЗ токена (должно вернуть 401)
+POST {{baseUrl}}/advertisements/
+Content-Type: application/json
+
+{
+  "title": "Тест без токена",
+  "description": "Не должно создаться"
+}
+
+###
+
+### 10. Троттлинг: 11 быстрых запросов без токена
+# Нажми Send Request 11 раз подряд - 11-й должен вернуть 429
+GET {{baseUrl}}/advertisements/
+
+###
+
+### 11. Создание объявлений для теста лимита (10 OPEN)
+# Нажми Send Request 9 раз (меняя title на 2, 3, 4...10)
+# У тебя уже есть 1 объявление, нужно создать ещё 9
+POST {{baseUrl}}/advertisements/
+Content-Type: application/json
+Authorization: Token 88dff2622d2917e1d539b8c16ee2e53acb930b80
+
+{
+  "title": "Тестовое объявление 2",
+  "description": "Проверка лимита",
+  "status": "OPEN"
+}
+
+###
+
+### 12. ТЕСТ 2: Попытка создать 11-е OPEN объявление (должно быть 400)
+POST {{baseUrl}}/advertisements/
+Content-Type: application/json
+Authorization: Token 88dff2622d2917e1d539b8c16ee2e53acb930b80
+
+{
+  "title": "ОШИБКА ЛИМИТА",
+  "description": "Это 11-е открытое объявление - не должно создаться",
+  "status": "OPEN"
+}
+
+###
+
+### 13. Просмотр одного объявления
+GET {{baseUrl}}/advertisements/1/
 Content-Type: application/json
 
 ###
 
-# фильтрация по дате
-GET {{baseUrl}}/advertisements/?created_at_before=2020-10-01
+### 14. Обновление статуса на CLOSED (чтобы освободить слот)
+PATCH {{baseUrl}}/advertisements/1/
 Content-Type: application/json
+Authorization: Token 88dff2622d2917e1d539b8c16ee2e53acb930b80
+
+{
+  "status": "CLOSED"
+}
